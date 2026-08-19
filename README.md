@@ -12,7 +12,7 @@ localized change, not a redesign.
 
 ## Screenshots
 
-| Log a meal                                            | Results & confidence                                                      | History                                            |
+| Log a meal                                            | History                                                                   | Results & confidence                               |
 | ----------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------- |
 | ![Log a meal screen](https://i.imgur.com/fzf4eJH.png) | ![Results screen with confidence badges](https://i.imgur.com/1EdMGYx.png) | ![History screen](https://i.imgur.com/f6FzgJP.png) |
 
