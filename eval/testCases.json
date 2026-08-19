@@ -1,0 +1,201 @@
+[
+  {
+    "id": "tc01",
+    "input": "bir tabak pirinç ve tavuk şiş",
+    "mockExtraction": [
+      {
+        "rawPhrase": "bir tabak pirinç",
+        "foodGuess": "rice",
+        "quantity": 1,
+        "unit": "plate",
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "tavuk şiş",
+        "foodGuess": "tavuk şiş",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["rice_white_cooked", "chicken_kebab"]
+  },
+  {
+    "id": "tc02",
+    "input": "2 eggs and a slice of normal ekmeği",
+    "mockExtraction": [
+      {
+        "rawPhrase": "2 eggs",
+        "foodGuess": "egg",
+        "quantity": 2,
+        "unit": "piece",
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "a slice of normal ekmeği",
+        "foodGuess": "normal ekmeği",
+        "quantity": 1,
+        "unit": "piece",
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["egg_boiled", "flatbread_ekmeği"]
+  },
+  {
+    "id": "tc03",
+    "input": "mercimek çorbası ve bir bardak çay",
+    "mockExtraction": [
+      {
+        "rawPhrase": "mercimek çorbası",
+        "foodGuess": "mercimek çorbası",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "bir bardak çay",
+        "foodGuess": "çay",
+        "quantity": 1,
+        "unit": "cup",
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["lentil_soup", "black_tea"]
+  },
+  {
+    "id": "tc04",
+    "input": "bir bardak yoğurt ve hurma",
+    "mockExtraction": [
+      {
+        "rawPhrase": "bir bardak yoğurt",
+        "foodGuess": "yogurt",
+        "quantity": 1,
+        "unit": "cup",
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "hurma",
+        "foodGuess": "dates",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["yogurt_plain", "date_fruit"]
+  },
+  {
+    "id": "tc05",
+    "input": "cheeseburger and fries",
+    "mockExtraction": [
+      {
+        "rawPhrase": "cheeseburger",
+        "foodGuess": "cheeseburger",
+        "quantity": 1,
+        "unit": "piece",
+        "qualifiers": ["cheese"]
+      },
+      {
+        "rawPhrase": "fries",
+        "foodGuess": "french fries",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["hamburger", null],
+    "notes": "french fries intentionally NOT in demo DB -> expected null match, exercises the 'no hallucinated match' path"
+  },
+  {
+    "id": "tc06",
+    "input": "otlu güveç ve pirinç",
+    "mockExtraction": [
+      {
+        "rawPhrase": "otlu güveç",
+        "foodGuess": "ghormeh sabzi",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "pirinç",
+        "foodGuess": "rice",
+        "quantity": 1,
+        "unit": "cup",
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["ghormeh_sabzi", "rice_white_cooked"]
+  },
+  {
+    "id": "tc07",
+    "input": "an apple and a banana",
+    "mockExtraction": [
+      {
+        "rawPhrase": "an apple",
+        "foodGuess": "apple",
+        "quantity": 1,
+        "unit": "piece",
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "a banana",
+        "foodGuess": "banana",
+        "quantity": 1,
+        "unit": "piece",
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["apple", "banana"]
+  },
+  {
+    "id": "tc08",
+    "input": "pepperoni pizza",
+    "mockExtraction": [
+      {
+        "rawPhrase": "pepperoni pizza",
+        "foodGuess": "pepperoni pizza",
+        "quantity": 1,
+        "unit": "piece",
+        "qualifiers": ["pepperoni"]
+      }
+    ],
+    "expectedFoodIds": ["pizza_slice_cheese"],
+    "notes": "close-but-not-exact category match; DB only has cheese pizza -> should land in MEDIUM confidence, not HIGH"
+  },
+  {
+    "id": "tc09",
+    "input": "bir bardak süt ve birkaç ceviz",
+    "mockExtraction": [
+      {
+        "rawPhrase": "bir bardak süt",
+        "foodGuess": "milk",
+        "quantity": 1,
+        "unit": "cup",
+        "qualifiers": []
+      },
+      {
+        "rawPhrase": "birkaç ceviz",
+        "foodGuess": "walnuts",
+        "quantity": null,
+        "unit": null,
+        "qualifiers": []
+      }
+    ],
+    "expectedFoodIds": ["milk_whole", "walnut"]
+  },
+  {
+    "id": "tc10",
+    "input": "spaghetti bolognese",
+    "mockExtraction": [
+      {
+        "rawPhrase": "spaghetti bolognese",
+        "foodGuess": "spaghetti with meat sauce",
+        "quantity": 1,
+        "unit": "cup",
+        "qualifiers": ["bolognese"]
+      }
+    ],
+    "expectedFoodIds": ["pasta_plain"],
+    "notes": "DB has plain pasta only, no bolognese sauce entry -> should be MEDIUM/LOW, tests under-specified DB coverage"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "name": "eatbetter-case-study-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Thin backend that proxies Gemini calls for the EatBetter case study app — keeps the API key server-side and adds retries, idempotency, and logging.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

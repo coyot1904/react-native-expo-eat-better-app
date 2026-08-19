@@ -1,0 +1,296 @@
+[
+  {
+    "id": "rice_white_cooked",
+    "canonicalName": "White rice, cooked",
+    "aliases": [
+      "pirinç",
+      "beyaz pirinç",
+      "pilav",
+      "polo",
+      "rice",
+      "steamed rice",
+      "boiled rice"
+    ],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 158,
+    "nutritionPer100g": {
+      "kcal": 130,
+      "proteinG": 2.7,
+      "carbsG": 28,
+      "fatG": 0.3
+    },
+    "category": "grain"
+  },
+  {
+    "id": "chicken_breast_grilled",
+    "canonicalName": "Chicken breast, grilled",
+    "aliases": [
+      "tavuk",
+      "tavuk göğsü",
+      "ızgara tavuk",
+      "grilled chicken",
+      "chicken breast"
+    ],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 172,
+    "nutritionPer100g": {
+      "kcal": 165,
+      "proteinG": 31,
+      "carbsG": 0,
+      "fatG": 3.6
+    },
+    "category": "protein"
+  },
+  {
+    "id": "chicken_kebab",
+    "canonicalName": "Chicken kebab (jujeh)",
+    "aliases": [
+      "tavuk şiş",
+      "şiş tavuk",
+      "tavuk kebap",
+      "chicken kebab",
+      "jujeh kabab"
+    ],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 200,
+    "nutritionPer100g": { "kcal": 190, "proteinG": 27, "carbsG": 1, "fatG": 9 },
+    "category": "protein"
+  },
+  {
+    "id": "kubideh_kebab",
+    "canonicalName": "Beef/lamb kubideh kebab",
+    "aliases": ["kıyma kebap", "adana kebap", "kubideh", "koobideh"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 150,
+    "nutritionPer100g": {
+      "kcal": 280,
+      "proteinG": 20,
+      "carbsG": 2,
+      "fatG": 22
+    },
+    "category": "protein"
+  },
+  {
+    "id": "ghormeh_sabzi",
+    "canonicalName": "Ghormeh sabzi stew",
+    "aliases": ["ghormeh sabzi", "khoresh ghormeh", "otlu güveç"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 240,
+    "nutritionPer100g": { "kcal": 150, "proteinG": 9, "carbsG": 8, "fatG": 9 },
+    "category": "stew"
+  },
+  {
+    "id": "gheimeh",
+    "canonicalName": "Gheimeh stew",
+    "aliases": ["khoresh gheimeh", "gheymeh", "bezelyeli et güveç"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 240,
+    "nutritionPer100g": { "kcal": 165, "proteinG": 11, "carbsG": 9, "fatG": 9 },
+    "category": "stew"
+  },
+  {
+    "id": "lentil_soup",
+    "canonicalName": "Lentil soup (adas)",
+    "aliases": ["mercimek çorbası", "mercimek", "lentil soup", "adasi"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 240,
+    "nutritionPer100g": {
+      "kcal": 90,
+      "proteinG": 6,
+      "carbsG": 14,
+      "fatG": 1.2
+    },
+    "category": "soup"
+  },
+  {
+    "id": "egg_boiled",
+    "canonicalName": "Egg, boiled",
+    "aliases": ["yumurta", "haşlanmış yumurta", "boiled egg", "egg"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 50,
+    "nutritionPer100g": {
+      "kcal": 155,
+      "proteinG": 13,
+      "carbsG": 1.1,
+      "fatG": 11
+    },
+    "category": "protein"
+  },
+  {
+    "id": "flatbread_lavash",
+    "canonicalName": "Lavash flatbread",
+    "aliases": ["lavaş", "lavaş ekmeği", "lavash", "flatbread"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 60,
+    "nutritionPer100g": {
+      "kcal": 275,
+      "proteinG": 9,
+      "carbsG": 56,
+      "fatG": 1.5
+    },
+    "category": "grain"
+  },
+  {
+    "id": "flatbread_barbari",
+    "canonicalName": "Normal ekmeği",
+    "aliases": ["normal ekmeği", "kalın pide ekmeği", "ekmeği"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 250,
+    "nutritionPer100g": {
+      "kcal": 280,
+      "proteinG": 8,
+      "carbsG": 55,
+      "fatG": 2.5
+    },
+    "category": "grain"
+  },
+  {
+    "id": "yogurt_plain",
+    "canonicalName": "Plain yogurt",
+    "aliases": ["yoğurt", "sade yoğurt", "yogurt", "plain yogurt"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 245,
+    "nutritionPer100g": {
+      "kcal": 61,
+      "proteinG": 3.5,
+      "carbsG": 4.7,
+      "fatG": 3.3
+    },
+    "category": "dairy"
+  },
+  {
+    "id": "salad_shirazi",
+    "canonicalName": "Shirazi salad (cucumber-tomato)",
+    "aliases": [
+      "çoban salatası",
+      "domates salatalık salatası",
+      "shirazi salad",
+      "cucumber tomato salad"
+    ],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 150,
+    "nutritionPer100g": { "kcal": 25, "proteinG": 1, "carbsG": 5, "fatG": 0.2 },
+    "category": "vegetable"
+  },
+  {
+    "id": "apple",
+    "canonicalName": "Apple",
+    "aliases": ["elma", "apple"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 182,
+    "nutritionPer100g": {
+      "kcal": 52,
+      "proteinG": 0.3,
+      "carbsG": 14,
+      "fatG": 0.2
+    },
+    "category": "fruit"
+  },
+  {
+    "id": "banana",
+    "canonicalName": "Banana",
+    "aliases": ["muz", "banana"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 118,
+    "nutritionPer100g": {
+      "kcal": 89,
+      "proteinG": 1.1,
+      "carbsG": 23,
+      "fatG": 0.3
+    },
+    "category": "fruit"
+  },
+  {
+    "id": "pasta_plain",
+    "canonicalName": "Pasta, cooked, plain",
+    "aliases": ["makarna", "sade makarna", "pasta", "spaghetti"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 140,
+    "nutritionPer100g": {
+      "kcal": 158,
+      "proteinG": 5.8,
+      "carbsG": 31,
+      "fatG": 0.9
+    },
+    "category": "grain"
+  },
+  {
+    "id": "pizza_slice_cheese",
+    "canonicalName": "Cheese pizza, slice",
+    "aliases": ["pizza", "peynirli pizza", "cheese pizza"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 107,
+    "nutritionPer100g": {
+      "kcal": 266,
+      "proteinG": 11,
+      "carbsG": 33,
+      "fatG": 10
+    },
+    "category": "mixed"
+  },
+  {
+    "id": "hamburger",
+    "canonicalName": "Hamburger, single patty",
+    "aliases": ["hamburger", "burger", "köfteli sandviç"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 200,
+    "nutritionPer100g": {
+      "kcal": 250,
+      "proteinG": 13,
+      "carbsG": 21,
+      "fatG": 13
+    },
+    "category": "mixed"
+  },
+  {
+    "id": "milk_whole",
+    "canonicalName": "Whole milk",
+    "aliases": ["süt", "tam yağlı süt", "milk"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 244,
+    "nutritionPer100g": {
+      "kcal": 61,
+      "proteinG": 3.2,
+      "carbsG": 4.8,
+      "fatG": 3.3
+    },
+    "category": "dairy"
+  },
+  {
+    "id": "walnut",
+    "canonicalName": "Walnuts",
+    "aliases": ["ceviz", "walnut", "walnuts"],
+    "defaultUnit": "gram",
+    "gramsPerUnit": 1,
+    "nutritionPer100g": {
+      "kcal": 654,
+      "proteinG": 15,
+      "carbsG": 14,
+      "fatG": 65
+    },
+    "category": "nuts"
+  },
+  {
+    "id": "date_fruit",
+    "canonicalName": "Dates",
+    "aliases": ["hurma", "dates", "date fruit"],
+    "defaultUnit": "piece",
+    "gramsPerUnit": 24,
+    "nutritionPer100g": {
+      "kcal": 282,
+      "proteinG": 2.5,
+      "carbsG": 75,
+      "fatG": 0.4
+    },
+    "category": "fruit"
+  },
+  {
+    "id": "black_tea",
+    "canonicalName": "Black tea, unsweetened",
+    "aliases": ["çay", "siyah çay", "tea", "black tea"],
+    "defaultUnit": "cup",
+    "gramsPerUnit": 240,
+    "nutritionPer100g": { "kcal": 1, "proteinG": 0, "carbsG": 0.3, "fatG": 0 },
+    "category": "beverage"
+  }
+]

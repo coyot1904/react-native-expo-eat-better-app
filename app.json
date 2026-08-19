@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "EatBetter Meal Logger",
+    "slug": "eatbetter-meal-logger",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.eatbetter.mealloggerdemo",
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatBetter uses your camera to identify food in photos of your meals."
+      }
+    },
+    "android": {
+      "package": "app.eatbetter.mealloggerdemo",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "EatBetter uses your camera to identify food in photos of your meals."
+        }
+      ]
+    ]
+  }
+}
