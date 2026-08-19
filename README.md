@@ -10,6 +10,12 @@ card). The extraction/matching architecture is model-agnostic — the LLM call i
 one function (`callLLMOnce` in `src/services/llmExtract.ts`), so swapping providers is a
 localized change, not a redesign.
 
+## Screenshots
+
+| Log a meal                                            | Results & confidence                                                      | History                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------- |
+| ![Log a meal screen](https://i.imgur.com/fzf4eJH.png) | ![Results screen with confidence badges](https://i.imgur.com/1EdMGYx.png) | ![History screen](https://i.imgur.com/f6FzgJP.png) |
+
 ## What this is
 
 An end-to-end mobile meal-logging flow: the user types a free-text description of what
@@ -40,7 +46,7 @@ splits the problem into two very different kinds of work and never lets the LLM 
 
 This is the **hybrid approach** (rules/retrieval + LLM) from the case study options. I chose
 it over a pure prompt/LLM flow because it makes the failure mode debuggable and boundable —
-a wrong nutrition number can only come from a wrong *match*, which is a much smaller, testable
+a wrong nutrition number can only come from a wrong _match_, which is a much smaller, testable
 surface than "the LLM's arithmetic/knowledge might be off."
 
 ## Confidence & human-in-the-loop
@@ -64,11 +70,13 @@ and two **deliberately unmatched** cases (foods not in the demo DB) to test that
 says "I don't know" instead of hallucinating a match.
 
 Run it:
+
 ```bash
 npm run eval
 ```
 
 Current result on the demo DB:
+
 ```
 Top-1 accuracy: 88.9% (16/18)
 Error taxonomy:
@@ -78,11 +86,12 @@ Error taxonomy:
 
 **Why the eval runs against the matcher offline, not the live LLM on every run:** LLM output
 can drift between calls and model versions, so it's not a stable regression signal. The
-matcher is deterministic and versioned, so it's what CI should gate on. A smaller *live* eval
+matcher is deterministic and versioned, so it's what CI should gate on. A smaller _live_ eval
 (hitting the real API on a sampled subset) is the right complement to catch extraction-stage
 drift — noted in `eval/runEval.ts` but not implemented here given the time box.
 
 **Error taxonomy** (the categories the harness classifies every mismatch into):
+
 - `wrong_match` — matched to a different, incorrect food
 - `false_positive` — matched to something when the correct answer was "no match"
 - `missed_match` — correct food exists in DB but score fell below threshold
@@ -95,13 +104,14 @@ trust/friction for no accuracy gain.
 
 ## Testing
 
-`eval/runEval.ts` above measures matching *accuracy*. Separately, `src/services/__tests__/`
-has unit tests for *correctness of the logic itself* — these two are complementary, not
+`eval/runEval.ts` above measures matching _accuracy_. Separately, `src/services/__tests__/`
+has unit tests for _correctness of the logic itself_ — these two are complementary, not
 duplicates: eval can hide a bug (wrong grams still "matches" the right food), and unit tests
 can't tell you if the matcher is well-tuned against real inputs (correct code can still score
 things badly). Both matter for the "accuracy mindset" this case study asks about.
 
 Run them:
+
 ```bash
 npm test
 ```
@@ -135,7 +145,7 @@ than done here given the time box.
 - **Idempotent saves:** `storage.ts` saves by `id` (the pipeline's `traceId`), so a retried
   save overwrites in place instead of duplicating a meal log.
 - **Schema validation:** LLM output is JSON-parsed and shape-validated (`validateShape`) on
-  *both* the server and the client — a malformed response fails loudly instead of silently
+  _both_ the server and the client — a malformed response fails loudly instead of silently
   propagating `undefined` into a nutrition calculation.
 
 ## Observability
@@ -143,6 +153,7 @@ than done here given the time box.
 Both sides log with a shared `traceId` per pipeline run, so one meal-log request — text or
 photo — can be reconstructed end-to-end, which is exactly what you need to answer "why did this
 specific log come out wrong."
+
 - `src/services/logger.ts` (client): per-stage events (`llm_extract`, `vision_extract`,
   `match`, `nutrition_calc`, `user_correction`, `error`).
 - `server/src/logger.js` (backend): mirrors the same shape server-side, viewable live at
@@ -155,9 +166,10 @@ seed data for growing the eval set from real usage.
 ## What I built vs. didn't (time-boxed scope)
 
 **Built:**
+
 - Full text → extraction → match → confidence → review/correct → save flow, working in Expo
 - **Photo input**: camera capture → vision extraction (same JSON-schema contract as text,
-  feeding the *same* matcher) → same review/correct/save flow. Confirms the matching/confidence
+  feeding the _same_ matcher) → same review/correct/save flow. Confirms the matching/confidence
   architecture generalizes across input modalities without changes.
 - **Backend proxy for the LLM call** (`server/`): a small Express service holds the Gemini
   key server-side, adds request idempotency (same `traceId`/`Idempotency-Key` across a client
@@ -170,12 +182,13 @@ seed data for growing the eval set from real usage.
 - History screen with local persistence
 
 **Didn't build (given the 7-day/demo scope), with the plan for each:**
+
 - **Real food DB / embeddings.** Demo uses 20 hand-written entries with string-similarity
   matching. Production plan: USDA FoodData Central (~400k entries) + `pgvector` in Supabase
   for embedding-based semantic search, since string similarity won't scale past a small DB
   (see "what breaks at scale").
 - **Auth/rate limiting on the backend.** The proxy solves the key-exposure problem but doesn't
-  yet gate *who* can call it or how often — currently anyone with the URL can hit it. Real
+  yet gate _who_ can call it or how often — currently anyone with the URL can hit it. Real
   build: per-user API key or session token, plus per-user request quotas.
 - **Persistent idempotency/log store.** Both currently live in-memory on the server, so they
   reset on restart (Render free tier cold-starts after inactivity). Real build: Redis for
@@ -188,11 +201,12 @@ seed data for growing the eval set from real usage.
 
 **Biggest trade-off:** Accuracy over latency/simplicity — the two-stage hybrid (LLM +
 deterministic matcher) is slower and more code than a single LLM call that returns
-calories directly, but it's the only way to make wrong answers *boundable and debuggable*
+calories directly, but it's the only way to make wrong answers _boundable and debuggable_
 rather than a black box. I'd make this trade again; a meal-logging app that confidently
 lies about calories is worse than one that sometimes says "I'm not sure."
 
 **Top 3 accuracy improvements, in order:**
+
 1. Replace string-similarity matching with embedding-based retrieval (pgvector) + a real
    food DB — the current matcher's ceiling is the small hand-written DB and simple scoring.
 2. Turn user corrections into a growing, versioned eval set — right now eval is static and
@@ -202,6 +216,7 @@ lies about calories is worse than one that sometimes says "I'm not sure."
    source of nutrition error in the current design.
 
 **What breaks at scale:**
+
 - The matcher is O(DB size) per item with no indexing — fine at 20 entries, needs a vector
   index (or at minimum a proper search index) at 400k+.
 - The backend has no shared rate limiting or caching yet; at scale it needs to batch/cache
@@ -210,6 +225,7 @@ lies about calories is worse than one that sometimes says "I'm not sure."
   multiple instances — needs Redis + a real telemetry pipeline.
 
 **Biggest security/privacy risks:**
+
 - ~~API key exposed in a client-direct LLM call~~ — fixed: the key now lives only in the
   backend's environment (`server/.env`), never shipped in the app bundle.
 - The backend itself has no auth yet — anyone with the URL can call it and consume API quota.
@@ -239,16 +255,19 @@ npm start   # runs on http://localhost:3000
 ```
 
 Back in the project root:
+
 ```bash
 echo "EXPO_PUBLIC_API_BASE_URL=http://<your-computer's-LAN-IP>:3000" > .env
 npx expo start
 ```
+
 (Use your deployed Render URL instead of a LAN IP if you deployed the backend — see
 `server/README.md`.)
 
 Scan the QR code with Expo Go, or press `i`/`a` for a simulator.
 
 Run the accuracy eval (no API key needed):
+
 ```bash
 npm run eval
 ```
