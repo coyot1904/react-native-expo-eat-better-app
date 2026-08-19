@@ -16,10 +16,6 @@ type Props = {
   hitSlop?: { top?: number; bottom?: number; left?: number; right?: number };
 };
 
-/**
- * Wraps a touchable so it scales down slightly on press and springs back —
- * gives every button/chip a tactile feel instead of a flat opacity change.
- */
 export default function PressScale({
   children,
   onPress,

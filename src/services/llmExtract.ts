@@ -1,29 +1,9 @@
 import { ExtractedFoodItem, LLMExtractionResult } from "../types";
 import { logEvent, withStageLogging } from "./logger";
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "";
-const MODEL = "gemini-2.5-flash";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
 const MAX_RETRIES = 2;
 const TIMEOUT_MS = 15000;
-
-const SYSTEM_PROMPT = `You are a food-text parser. Your ONLY job is to extract structured food mentions from a user's free-text meal description (which may be in Persian, English, or mixed).
-
-STRICT RULES:
-- Do NOT output nutrition numbers (no calories, no macros). You are a text parser, not a nutrition database.
-- Do NOT invent foods that are not mentioned or strongly implied.
-- If quantity or unit is not stated, use null — do not guess a number.
-- Split compound meals into separate items (e.g. "rice with grilled chicken" -> two items).
-- Preserve the exact source phrase for each item in rawPhrase, in the original language.
-- If the input is ambiguous or you are unsure about a food's identity, still extract it with your best guess in foodGuess, and add a note in modelNotes — do not silently drop it.
-
-Respond with ONLY valid JSON matching this exact shape, no markdown fences, no preamble:
-{
-  "items": [
-    { "rawPhrase": string, "foodGuess": string, "quantity": number | null, "unit": string | null, "qualifiers": string[] }
-  ],
-  "languageDetected": string,
-  "modelNotes": string | null
-}`;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -36,9 +16,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 function validateShape(parsed: unknown): LLMExtractionResult {
   if (typeof parsed !== "object" || parsed === null)
-    throw new Error("LLM output not an object");
+    throw new Error("Server response not an object");
   const obj = parsed as Record<string, unknown>;
-  if (!Array.isArray(obj.items)) throw new Error("LLM output missing items[]");
+  if (!Array.isArray(obj.items))
+    throw new Error("Server response missing items[]");
   const items: ExtractedFoodItem[] = obj.items.map(
     (raw: unknown, i: number) => {
       const r = raw as Record<string, unknown>;
@@ -66,43 +47,36 @@ function validateShape(parsed: unknown): LLMExtractionResult {
   };
 }
 
-async function callLLMOnce(text: string): Promise<LLMExtractionResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+/**
+ * Calls our own backend (server/) instead of Gemini directly. The backend
+ * holds the API key, so nothing secret ships inside the app bundle. The
+ * traceId doubles as the Idempotency-Key: if this exact call is retried
+ * below, the server returns the cached result instead of re-billing the LLM.
+ */
+async function callBackendOnce(
+  text: string,
+  traceId: string,
+): Promise<LLMExtractionResult> {
   const response = await withTimeout(
-    fetch(url, {
+    fetch(`${API_BASE_URL}/api/extract/text`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text }] }],
-        generationConfig: {
-          temperature: 0.2, // low temperature: we want consistent extraction, not creative variety
-          responseMimeType: "application/json", // Gemini native JSON-mode, skips markdown-fence stripping
-        },
-      }),
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": traceId,
+        "x-trace-id": traceId,
+      },
+      body: JSON.stringify({ text }),
     }),
     TIMEOUT_MS,
   );
 
   if (!response.ok) {
     throw new Error(
-      `LLM API error ${response.status}: ${await response.text()}`,
+      `Backend error ${response.status}: ${await response.text()}`,
     );
   }
 
-  const data = await response.json();
-  const textOut: string | undefined =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textOut) throw new Error("LLM response had no text content");
-
-  const cleaned = textOut.replace(/```json|```/g, "").trim();
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error("LLM output was not valid JSON");
-  }
-  return validateShape(parsed);
+  return validateShape(await response.json());
 }
 
 export async function extractFoodItems(
@@ -116,7 +90,7 @@ export async function extractFoodItems(
       let lastError: unknown;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await callLLMOnce(rawText);
+          const result = await callBackendOnce(rawText, traceId);
           if (attempt > 0) {
             logEvent({
               traceId,

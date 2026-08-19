@@ -10,12 +10,19 @@ import {
   View,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../navigation";
-import { CanonicalFood, MatchedFoodItem } from "../types";
+
+// Services
 import { saveMealLog } from "../services/storage";
 import { logEvent } from "../services/logger";
+
+// Components
 import FadeIn from "../components/FadeIn";
 import PressScale from "../components/PressScale";
+
+// Types
+import type { RootStackParamList } from "../types";
+import { CanonicalFood, MatchedFoodItem } from "../types";
+type Props = NativeStackScreenProps<RootStackParamList, "Results">;
 
 if (
   Platform.OS === "android" &&
@@ -24,8 +31,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, "Results">;
-
+// Variables
 const CONFIDENCE_COLORS: Record<string, string> = {
   high: "#4ADE80",
   medium: "#FACC15",
@@ -222,8 +228,9 @@ export default function ResultsScreen({ route, navigation }: Props) {
           <View style={styles.totalCard}>
             <Text style={styles.totalTitle}>Total</Text>
             <Text style={styles.totalLine}>
-              {entry.totalNutrition.kcal} kcal · P{entry.totalNutrition.proteinG}g
-              C{entry.totalNutrition.carbsG}g F{entry.totalNutrition.fatG}g
+              {entry.totalNutrition.kcal} kcal · P
+              {entry.totalNutrition.proteinG}g C{entry.totalNutrition.carbsG}g F
+              {entry.totalNutrition.fatG}g
             </Text>
           </View>
         </FadeIn>

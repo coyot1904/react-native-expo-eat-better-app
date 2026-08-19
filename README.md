@@ -93,31 +93,76 @@ scoring weights or add disambiguation; `missed_match` means grow DB coverage or 
 thresholds; `low_confidence_correct_flagged` means thresholds are too strict, costing user
 trust/friction for no accuracy gain.
 
+## Testing
+
+`eval/runEval.ts` above measures matching *accuracy*. Separately, `src/services/__tests__/`
+has unit tests for *correctness of the logic itself* — these two are complementary, not
+duplicates: eval can hide a bug (wrong grams still "matches" the right food), and unit tests
+can't tell you if the matcher is well-tuned against real inputs (correct code can still score
+things badly). Both matter for the "accuracy mindset" this case study asks about.
+
+Run them:
+```bash
+npm test
+```
+
+- **`matcher.test.ts`** — exact/alias matches land at high confidence; a typo still resolves
+  to the right food; unrelated input correctly returns no match (not a wrong guess) at low
+  confidence; gram/nutrition math is checked against known values; the conservative
+  mismatched-unit fallback (see `resolveGrams` comment above) doesn't silently invent a
+  conversion.
+- **`pipeline.test.ts`** — mocks the LLM call so the deterministic part (matching + nutrition
+  summation) is tested without network flakiness; checks that unmatched items stay visible
+  with `null` nutrition instead of being dropped or defaulting to `0`/`NaN`; checks that a
+  photo-sourced entry carries `imageUri`/`aiDescription` correctly; checks that extraction
+  errors propagate instead of silently returning an empty "successful" entry.
+
+**What's not covered yet:** the LLM-calling code path itself (`llmExtract.ts`,
+`visionExtract.ts`, and the server's mirrored versions) — these are mocked out in
+`pipeline.test.ts` rather than tested directly. Testing them would mean either recording/replaying
+real API responses (fixtures) or spinning up a local mock server; noted as a next step rather
+than done here given the time box.
+
 ## Reliability
 
 - **Idempotent LLM calls:** extraction is a pure function of input text — same input, same
   request, safe to retry. Retries (`MAX_RETRIES = 2`, exponential backoff) trigger on
   network/timeout/parse errors, but a well-formed empty result is treated as valid, not retried.
+- **Server-side idempotency:** the client sends its `traceId` as an `Idempotency-Key` header;
+  the backend (`server/src/idempotency.js`) caches in-flight/recent results by that key, so a
+  client-side timeout that retries a request the server actually already completed returns the
+  cached result instead of calling Gemini (and potentially the matcher) twice.
 - **Idempotent saves:** `storage.ts` saves by `id` (the pipeline's `traceId`), so a retried
   save overwrites in place instead of duplicating a meal log.
-- **Schema validation:** LLM output is JSON-parsed and shape-validated (`validateShape`)
-  before anything downstream touches it — a malformed response fails loudly instead of
-  silently propagating `undefined` into a nutrition calculation.
+- **Schema validation:** LLM output is JSON-parsed and shape-validated (`validateShape`) on
+  *both* the server and the client — a malformed response fails loudly instead of silently
+  propagating `undefined` into a nutrition calculation.
 
 ## Observability
 
-`src/services/logger.ts` is a minimal structured event log: every pipeline stage
-(`llm_extract`, `match`, `nutrition_calc`, `user_correction`, `error`) logs with a shared
-`traceId`, so one meal-log request can be reconstructed end-to-end — which is exactly what
-you need to answer "why did this specific log come out wrong." In production this would ship
-to a real sink (Sentry/Datadog/Supabase logs table) instead of an in-memory ring buffer, and
-`user_correction` events specifically would be the seed data for growing the eval set from
-real usage.
+Both sides log with a shared `traceId` per pipeline run, so one meal-log request — text or
+photo — can be reconstructed end-to-end, which is exactly what you need to answer "why did this
+specific log come out wrong."
+- `src/services/logger.ts` (client): per-stage events (`llm_extract`, `vision_extract`,
+  `match`, `nutrition_calc`, `user_correction`, `error`).
+- `server/src/logger.js` (backend): mirrors the same shape server-side, viewable live at
+  `GET /debug/logs` — useful for demoing the pipeline without needing a phone in hand.
+
+Both are in-memory ring buffers for this demo. In production these would ship to a real sink
+(Sentry/Datadog/Supabase logs table), and `user_correction` events specifically would be the
+seed data for growing the eval set from real usage.
 
 ## What I built vs. didn't (time-boxed scope)
 
 **Built:**
 - Full text → extraction → match → confidence → review/correct → save flow, working in Expo
+- **Photo input**: camera capture → vision extraction (same JSON-schema contract as text,
+  feeding the *same* matcher) → same review/correct/save flow. Confirms the matching/confidence
+  architecture generalizes across input modalities without changes.
+- **Backend proxy for the LLM call** (`server/`): a small Express service holds the Gemini
+  key server-side, adds request idempotency (same `traceId`/`Idempotency-Key` across a client
+  retry returns the cached result instead of re-billing the LLM), and structured per-stage
+  logging exposed at `GET /debug/logs`. Deployed free on Render.
 - Canonical food DB (20 items, Turkish + English aliases) — a stand-in for USDA FoodData
   Central + local-dish data in production
 - Deterministic matcher with confidence bands and disambiguation UI
@@ -125,17 +170,16 @@ real usage.
 - History screen with local persistence
 
 **Didn't build (given the 7-day/demo scope), with the plan for each:**
-- **Photo input.** Would add a vision-capable extraction call (same JSON-schema contract,
-  image input instead of text) feeding the *same* matcher — the matching/confidence
-  architecture doesn't change.
 - **Real food DB / embeddings.** Demo uses 20 hand-written entries with string-similarity
   matching. Production plan: USDA FoodData Central (~400k entries) + `pgvector` in Supabase
   for embedding-based semantic search, since string similarity won't scale past a small DB
   (see "what breaks at scale").
-- **Backend proxy for the LLM call.** The app currently calls Anthropic directly from the
-  client for demo simplicity — flagged explicitly in `llmExtract.ts` as a **security
-  trade-off**: it works for a local build but leaks the API key in a real app bundle. Real
-  build: a Supabase Edge Function holds the key, adds per-user rate limiting.
+- **Auth/rate limiting on the backend.** The proxy solves the key-exposure problem but doesn't
+  yet gate *who* can call it or how often — currently anyone with the URL can hit it. Real
+  build: per-user API key or session token, plus per-user request quotas.
+- **Persistent idempotency/log store.** Both currently live in-memory on the server, so they
+  reset on restart (Render free tier cold-starts after inactivity). Real build: Redis for
+  idempotency, a real log sink (Sentry/Datadog/Supabase logs table) for observability.
 - **Fine-tuning.** Not attempted — with rules+retrieval handling the hard-precision part
   (nutrition), the ROI of fine-tuning the extraction step is lower until there's real usage
   data showing systematic extraction errors the prompt can't fix.
@@ -160,18 +204,21 @@ lies about calories is worse than one that sometimes says "I'm not sure."
 **What breaks at scale:**
 - The matcher is O(DB size) per item with no indexing — fine at 20 entries, needs a vector
   index (or at minimum a proper search index) at 400k+.
-- Direct client→Anthropic calls have no shared rate limiting; at scale this needs to go
-  through a backend that can batch, cache repeated queries (e.g. "rice" gets looked up
-  constantly), and apply per-user quotas.
-- In-memory logging obviously doesn't survive app restarts or scale across users — needs a
-  real telemetry pipeline.
+- The backend has no shared rate limiting or caching yet; at scale it needs to batch/cache
+  repeated queries (e.g. "rice" gets looked up constantly) and apply per-user quotas.
+- In-memory idempotency and logging on the server don't survive restarts or scale across
+  multiple instances — needs Redis + a real telemetry pipeline.
 
 **Biggest security/privacy risks:**
-- API key exposed in a client-direct LLM call (noted above) — must move behind a backend.
+- ~~API key exposed in a client-direct LLM call~~ — fixed: the key now lives only in the
+  backend's environment (`server/.env`), never shipped in the app bundle.
+- The backend itself has no auth yet — anyone with the URL can call it and consume API quota.
+  Needs a per-user token before this could go further than a demo.
 - Meal/food data is sensitive (can reveal health conditions, religious/dietary practices,
   disordered eating patterns) — needs explicit data retention limits and care about what
-  gets logged verbatim (raw user text) vs. what gets aggregated, especially in the
-  observability pipeline.
+  gets logged verbatim (raw user text, photos) vs. what gets aggregated, especially now that
+  `/debug/logs` exists — it's open for demo convenience but would need to be removed or
+  protected before touching real user data.
 - Local storage (AsyncStorage) is unencrypted on-device; a production build should use
   encrypted storage for meal history.
 
@@ -179,11 +226,26 @@ lies about calories is worse than one that sometimes says "I'm not sure."
 
 ```bash
 npm install
-# Get a free API key (no credit card) at https://aistudio.google.com/apikey
-# See security note above re: client-side exposure — fine for local demo/dev, not for shipping
-echo "EXPO_PUBLIC_GEMINI_API_KEY=your-key-here" > .env
+npx expo install --fix   # aligns versions if you're on a different SDK than the template
+```
+
+This app calls its own backend for LLM/vision calls (key is never in the app). Either run the
+backend locally or point at a deployed instance — see `server/README.md` for both.
+
+```bash
+# Local backend:
+cd server && npm install && cp .env.example .env  # paste your Gemini key into .env
+npm start   # runs on http://localhost:3000
+```
+
+Back in the project root:
+```bash
+echo "EXPO_PUBLIC_API_BASE_URL=http://<your-computer's-LAN-IP>:3000" > .env
 npx expo start
 ```
+(Use your deployed Render URL instead of a LAN IP if you deployed the backend — see
+`server/README.md`.)
+
 Scan the QR code with Expo Go, or press `i`/`a` for a simulator.
 
 Run the accuracy eval (no API key needed):

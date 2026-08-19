@@ -1,10 +1,3 @@
-// ---------------------------------------------------------------------------
-// Core domain types for the meal logging pipeline.
-// Pipeline: raw text -> LLM extraction -> canonical food matching -> nutrition
-// ---------------------------------------------------------------------------
-
-/** What the LLM is allowed to output. Deliberately NOT nutrition numbers —
- * the LLM extracts structure, it never invents calories/macros. */
 export interface ExtractedFoodItem {
   rawPhrase: string; // the exact span of user text this came from, e.g.
   foodGuess: string; // normalized food name guess, e.g. "white rice, cooked"
@@ -16,20 +9,17 @@ export interface ExtractedFoodItem {
 export interface LLMExtractionResult {
   items: ExtractedFoodItem[];
   languageDetected: string;
-  modelNotes: string | null; // LLM's own flag of ambiguity, not used as ground truth
+  modelNotes: string | null;
 }
 
-/** Same shape as text extraction, plus a short natural-language description
- * of the plate — this is the "what the AI sees" blurb shown to the user. */
 export interface VisionExtractionResult extends LLMExtractionResult {
   description: string;
 }
 
-/** A row in our canonical food database. */
 export interface CanonicalFood {
   id: string;
   canonicalName: string;
-  aliases: string[]; // includes Persian + English colloquial names
+  aliases: string[];
   defaultUnit: string; // "gram" | "piece" | "cup" | "plate"
   gramsPerUnit: number; // conversion factor for defaultUnit -> grams
   nutritionPer100g: {
@@ -56,7 +46,7 @@ export interface MatchedFoodItem {
     fatG: number;
   } | null;
   needsUserConfirmation: boolean;
-  candidateAlternatives: { food: CanonicalFood; score: number }[]; // for disambiguation UI
+  candidateAlternatives: { food: CanonicalFood; score: number }[];
 }
 
 export interface MealLogEntry {
@@ -77,8 +67,6 @@ export interface MealLogEntry {
   aiDescription?: string; // AI's short description of the plate, if source === "photo"
 }
 
-/** Structured event shape written by services/logger.ts.
- * This is our minimal "observability" surface. */
 export interface PipelineLogEvent {
   traceId: string;
   stage:

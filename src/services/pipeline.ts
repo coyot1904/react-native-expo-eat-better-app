@@ -46,11 +46,6 @@ export async function runMealLoggingPipeline(
   return entry;
 }
 
-/**
- * Same shape as runMealLoggingPipeline, but starts from a photo instead of
- * typed text: vision model identifies the foods, then it's the same
- * matcher + nutrition summing as the text flow.
- */
 export async function runPhotoMealLoggingPipeline(
   base64Image: string,
   mimeType: string,

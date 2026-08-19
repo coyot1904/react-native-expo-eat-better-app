@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../types";
+
+// Components
 import {
   runMealLoggingPipeline,
   runPhotoMealLoggingPipeline,
@@ -18,8 +19,11 @@ import {
 import FadeIn from "../components/FadeIn";
 import PressScale from "../components/PressScale";
 
+// Types
+import type { RootStackParamList } from "../types";
 type Props = NativeStackScreenProps<RootStackParamList, "LogMeal">;
 
+// Variables
 const EXAMPLES = [
   "bir tabak pirinç, tavuk şiş ve çoban salatası",
   "2 eggs and a slice of normal ekmeği",
@@ -243,16 +247,17 @@ const styles = StyleSheet.create({
   dividerText: { color: "#64748B", fontSize: 12 },
   photoButton: {
     flexDirection: "row",
-    backgroundColor: "#4ADE80",
+    backgroundColor: "transparent",
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 20,
     borderWidth: 1.5,
+    borderColor: "#4ADE80",
     gap: 10,
   },
-  photoButtonText: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
+  photoButtonText: { color: "#4ADE80", fontSize: 16, fontWeight: "700" },
   historyLink: { alignItems: "center", marginTop: 20 },
   historyLinkText: { color: "#38BDF8", fontSize: 14 },
 });

@@ -2,13 +2,18 @@ import React, { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../navigation";
-import { MealLogEntry } from "../types";
+import type { RootStackParamList } from "../types";
+
+// Services
 import { getAllMealLogs, deleteMealLog } from "../services/storage";
+
+// Components
 import FadeIn from "../components/FadeIn";
 import PressScale from "../components/PressScale";
 import HistoryCard from "../components/HistoryCard";
 
+// Types
+import { MealLogEntry } from "../types";
 type Props = NativeStackScreenProps<RootStackParamList, "History">;
 
 export default function HistoryScreen({ navigation }: Props) {
@@ -17,7 +22,7 @@ export default function HistoryScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       getAllMealLogs().then(setLogs);
-    }, [])
+    }, []),
   );
 
   async function handleDelete(id: string) {
@@ -30,7 +35,10 @@ export default function HistoryScreen({ navigation }: Props) {
       <FadeIn>
         <View style={styles.header}>
           <Text style={styles.title}>History</Text>
-          <PressScale scaleTo={0.94} onPress={() => navigation.navigate("LogMeal")}>
+          <PressScale
+            scaleTo={0.94}
+            onPress={() => navigation.navigate("LogMeal")}
+          >
             <Text style={styles.newLink}>+ New</Text>
           </PressScale>
         </View>

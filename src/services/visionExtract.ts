@@ -1,31 +1,9 @@
 import { ExtractedFoodItem, VisionExtractionResult } from "../types";
 import { logEvent, withStageLogging } from "./logger";
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "";
-const MODEL = "gemini-2.5-flash";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
 const MAX_RETRIES = 2;
 const TIMEOUT_MS = 20000; // vision calls run a bit slower than text-only
-
-const SYSTEM_PROMPT = `You are a food-photo analyst. Look at the photo of a meal and identify what's on the plate.
-
-STRICT RULES:
-- Do NOT output nutrition numbers (no calories, no macros). You identify foods, you don't calculate nutrition.
-- Only report foods you can actually see. Do not invent items that aren't visible.
-- Estimate a portion size in "unit" + "quantity" from visual cues if you reasonably can (e.g. "1 plate", "2 pieces"); if you can't tell, use null — do not guess a precise number.
-- If multiple distinct foods are visible, split them into separate items (e.g. rice and grilled chicken on the same plate -> two items).
-- Note any qualifiers you can see (e.g. "grilled", "fried", "with sauce").
-- If the photo is blurry, dark, or doesn't clearly show food, still do your best and say so in modelNotes — do not refuse.
-- Write "description" as one short, friendly sentence describing the plate as a whole, the way you'd describe it to the person who took the photo.
-
-Respond with ONLY valid JSON matching this exact shape, no markdown fences, no preamble:
-{
-  "items": [
-    { "rawPhrase": string, "foodGuess": string, "quantity": number | null, "unit": string | null, "qualifiers": string[] }
-  ],
-  "languageDetected": string,
-  "modelNotes": string | null,
-  "description": string
-}`;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -38,9 +16,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 function validateShape(parsed: unknown): VisionExtractionResult {
   if (typeof parsed !== "object" || parsed === null)
-    throw new Error("LLM output not an object");
+    throw new Error("Server response not an object");
   const obj = parsed as Record<string, unknown>;
-  if (!Array.isArray(obj.items)) throw new Error("LLM output missing items[]");
+  if (!Array.isArray(obj.items))
+    throw new Error("Server response missing items[]");
   const items: ExtractedFoodItem[] = obj.items.map(
     (raw: unknown, i: number) => {
       const r = raw as Record<string, unknown>;
@@ -72,60 +51,33 @@ function validateShape(parsed: unknown): VisionExtractionResult {
   };
 }
 
-async function callLLMOnce(
+async function callBackendOnce(
   base64Image: string,
   mimeType: string,
+  traceId: string,
 ): Promise<VisionExtractionResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
   const response = await withTimeout(
-    fetch(url, {
+    fetch(`${API_BASE_URL}/api/extract/photo`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { inlineData: { mimeType, data: base64Image } },
-              { text: "What food is in this photo?" },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.2, // low temperature: consistent identification, not creative variety
-          responseMimeType: "application/json",
-        },
-      }),
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": traceId,
+        "x-trace-id": traceId,
+      },
+      body: JSON.stringify({ imageBase64: base64Image, mimeType }),
     }),
     TIMEOUT_MS,
   );
 
   if (!response.ok) {
     throw new Error(
-      `LLM API error ${response.status}: ${await response.text()}`,
+      `Backend error ${response.status}: ${await response.text()}`,
     );
   }
 
-  const data = await response.json();
-  const textOut: string | undefined =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textOut) throw new Error("LLM response had no text content");
-
-  const cleaned = textOut.replace(/```json|```/g, "").trim();
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error("LLM output was not valid JSON");
-  }
-  return validateShape(parsed);
+  return validateShape(await response.json());
 }
 
-/**
- * Same retry/timeout/logging shape as extractFoodItems in llmExtract.ts,
- * but takes a base64-encoded photo instead of raw text.
- */
 export async function extractFoodItemsFromImage(
   base64Image: string,
   mimeType: string,
@@ -138,7 +90,7 @@ export async function extractFoodItemsFromImage(
       let lastError: unknown;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await callLLMOnce(base64Image, mimeType);
+          const result = await callBackendOnce(base64Image, mimeType, traceId);
           if (attempt > 0) {
             logEvent({
               traceId,
@@ -159,7 +111,7 @@ export async function extractFoodItemsFromImage(
             },
           });
           if (attempt < MAX_RETRIES) {
-            await new Promise((r) => setTimeout(r, 300 * 2 ** attempt)); // exponential backoff
+            await new Promise((r) => setTimeout(r, 300 * 2 ** attempt));
           }
         }
       }

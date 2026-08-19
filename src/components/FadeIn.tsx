@@ -9,10 +9,6 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Fades and slides content in on mount. Drop it around anything that should
- * animate in — pass a `delay` to stagger a list of these.
- */
 export default function FadeIn({
   children,
   delay = 0,
