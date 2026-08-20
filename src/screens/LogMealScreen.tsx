@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import {
+  ActionSheetIOS,
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -56,22 +58,7 @@ export default function LogMealScreen({ navigation }: Props) {
     }
   }
 
-  async function handleTakePhoto() {
-    setError(null);
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      setError("Camera permission is needed to take a photo of your meal.");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      base64: true,
-      quality: 0.6,
-      allowsEditing: false,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-
-    const asset = result.assets[0];
+  async function processPickedAsset(asset: ImagePicker.ImagePickerAsset) {
     if (!asset.base64) {
       setError("Couldn't read that photo. Please try again.");
       return;
@@ -94,6 +81,64 @@ export default function LogMealScreen({ navigation }: Props) {
       );
     } finally {
       setPhotoLoading(false);
+    }
+  }
+
+  async function handleTakePhoto() {
+    setError(null);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      setError("Camera permission is needed to take a photo of your meal.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      base64: true,
+      quality: 0.6,
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    await processPickedAsset(result.assets[0]);
+  }
+
+  async function handlePickFromLibrary() {
+    setError(null);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      setError(
+        "Photo library permission is needed to pick a photo of your meal.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      base64: true,
+      quality: 0.6,
+      allowsEditing: false,
+      mediaTypes: ["images"],
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    await processPickedAsset(result.assets[0]);
+  }
+
+  function handleChoosePhotoSource() {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) handleTakePhoto();
+          else if (buttonIndex === 2) handlePickFromLibrary();
+        },
+      );
+    } else {
+      Alert.alert("Add a photo", undefined, [
+        { text: "Take Photo", onPress: handleTakePhoto },
+        { text: "Choose from Library", onPress: handlePickFromLibrary },
+        { text: "Cancel", style: "cancel" },
+      ]);
     }
   }
 
@@ -171,7 +216,7 @@ export default function LogMealScreen({ navigation }: Props) {
       <FadeIn delay={380}>
         <PressScale
           style={[styles.photoButton, busy && styles.buttonDisabled]}
-          onPress={handleTakePhoto}
+          onPress={handleChoosePhotoSource}
           disabled={busy}
           scaleTo={0.97}
         >
@@ -181,7 +226,7 @@ export default function LogMealScreen({ navigation }: Props) {
               <Text style={styles.photoButtonText}>Analyzing photo...</Text>
             </>
           ) : (
-            <Text style={styles.photoButtonText}>📷 Take a photo instead</Text>
+            <Text style={styles.photoButtonText}>📷 Add a photo instead</Text>
           )}
         </PressScale>
       </FadeIn>
